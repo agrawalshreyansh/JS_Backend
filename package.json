@@ -1,0 +1,16 @@
+{
+  "name": "professional-js-backend",
+  "version": "1.0.0",
+  "description": "nodejs-backend",
+  "license": "ISC",
+  "author": "Shrage",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src/index.js"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9",
+    "prettier": "^3.4.2"
+  }
+}
