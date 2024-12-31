@@ -7,3 +7,5 @@ dotenv.config({
 })
 
 connectDB()
+.then()
+.catch()
