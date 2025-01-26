@@ -1,51 +1,60 @@
-import mongoose,{Schema} from "mongoose";
+import bcrypt from "bcrypt"
+import mongoose, {Schema} from "mongoose";
+import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
-const videoSchema = new Schema(
+const userSchema = new Schema(
     {
-        videoFile : {
+        username:{
+            type: String,
+            required : true,
+            unique:true,
+            lowercase:true,
+            trim:true,
+            index:true
+        },
+        email : {
+            type: String,
+            required : true,
+            lowercase:true,
+            unique:true,
+            trim:true,
+        },
+        fullName : {
+            type: String,
+            required : true,
+            trim:true,
+            index:true
+        },
+        avatar:{
+            type: String,
+            required : true,
+        },
+        coverImage:{
+            type: String,
+        },
+        watchHistory : [
+            {
+                type: Schema.Types.ObjectId,
+                ref: "Video"
+            }
+        ],
+        password : {
             type:String,
-            required:true
+            required : [true, 'Password is required']
         },
-        thumbnail: {
-            type:String,
-            required:true
-        },
-        title : {
-            type : String,
-            required:true
-        }, 
-        description : {
-            type : string,
-            required: true
-        },
-        duration : {
-            type: Number,
-            required:true
-        },
-        views : {
-            type:Number,
-            default:0
-        }, 
-        isPublished :{
-            type: Boolean,
-            default:true
-        }, 
-        owner : {
-            type: Schema.Types.ObjectId,
-            ref : 'User'
+        refreshToken : {
+            type:String
         }
-    },
-    {
-        timestamps:true
+
+    }, {
+        timestamps: true
     }
 )
 
-
-//Process and crypt pwd only when we call it just before saving
 userSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next() ;
 
-    this.password = bcrypt.hash(this.password,10)
+    this.password = await bcrypt.hash(this.password,10)
     next()
 })
 
@@ -83,4 +92,5 @@ userSchema.methods.generateRefreshToken = function() {
     )
 }
 
-export const Video = mongoose.model("Video", videoSchema)
+
+export const User = mongoose.model("User", userSchema)
