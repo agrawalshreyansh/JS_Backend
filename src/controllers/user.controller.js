@@ -36,6 +36,7 @@ const registerUser = asyncHandler( async (req, res) => {
     ){
         throw new ApiError(400,"All fields are required!")
     }
+    
     const existedUser = await User.findOne({
         $or: [{username},{email}]
     })
@@ -342,10 +343,10 @@ const getUSerChannelProfile = asyncHandler(async(req,res) => {
         {
             $addFields: {
                 subscribersCount: {
-                    $size: "subscribers"
+                    $size: "$subscribers"
                 },
                 channelsSubscribedToCount :{
-                    $size: "subscribedTo"
+                    $size: "$subscribedTo"
                 },
                 isSubscribed : {
                     $cond: {
