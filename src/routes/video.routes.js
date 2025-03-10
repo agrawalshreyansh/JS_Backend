@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import {playVideo, uploadVideo} from "../controllers/video.controller.js"
+import {playVideo, uploadVideo, watchHistory, channelVideos, updateWatchHistory} from "../controllers/video.controller.js"
 
 
 const router = Router()
@@ -22,5 +22,8 @@ router.route("/upload").post(
 )
 
 router.route("/play/:id").get(playVideo)
+router.route("/history").get(verifyJWT,watchHistory)
+router.route("/getVideos/:username").get(channelVideos)
+router.route('/:id/updateHistory').get(verifyJWT,updateWatchHistory)
 
 export default router

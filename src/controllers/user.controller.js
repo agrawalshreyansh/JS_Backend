@@ -91,14 +91,12 @@ const registerUser = asyncHandler( async (req, res) => {
 
 const loginUser = asyncHandler(async (req,res) => {
     
-    const {email, username, password} = req.body
-    if (!(username || email)) {
-        throw new ApiError(400, "username or email is required")
+    const { username, password} = req.body
+    if (!username) {
+        throw new ApiError(400, "username is required")
     }
 
-    const user = await User.findOne({
-        $or: [{username},{email}]
-    })
+    const user = await User.findOne({username})
 
     if (!user) {
         throw new ApiError(404, "User does not exist")
@@ -142,7 +140,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     )
     const options = {
         httpOnly : true,
-        secure:true
+        secure : true
     }
 
     return res
@@ -372,7 +370,7 @@ const getUSerChannelProfile = asyncHandler(async(req,res) => {
     ])
 
     if (!channel?.length)  {
-        throw new ApiError(404, "Channel does not exists")
+        return res.status(404).json( new ApiError(404, "Channel does not exists"))
     }
 
     return res
