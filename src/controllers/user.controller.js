@@ -27,7 +27,6 @@ const generateAccessAndRefreshTokens =  async(userId) => {
     }
 }
 
-
 const registerUser = asyncHandler( async (req, res) => {
     const {fullName,email,username,password} = req.body
     
@@ -46,8 +45,7 @@ const registerUser = asyncHandler( async (req, res) => {
     }
 
     const avatarLocalPath = req.files?.avatar[0]?.path
-    // const coverImageLocalPath = req.files?.coverImage[0]?.path;
-
+    
     let coverImageLocalPath;
     if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
         coverImageLocalPath = req.files.coverImage[0].path
@@ -92,20 +90,22 @@ const registerUser = asyncHandler( async (req, res) => {
 const loginUser = asyncHandler(async (req,res) => {
     
     const { username, password} = req.body
-    if (!username) {
-        throw new ApiError(400, "username is required")
+    if (!username || !password ) {
+        throw new ApiError(400, "All fields are mandatory")
+        
     }
 
     const user = await User.findOne({username})
 
     if (!user) {
         throw new ApiError(404, "User does not exist")
+        
     }
 
    const isPasswordValid = await user.isPasswordCorrect(password)
 
     if (!isPasswordValid) {
-        throw new ApiError(401, "Invalid user credentials")
+        throw new ApiError(401, "Invalid Password")
     }
 
     const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(user._id)
@@ -114,9 +114,7 @@ const loginUser = asyncHandler(async (req,res) => {
 
     const options = {
         httpOnly : true,
-        secure:true,
-        sameSite: "None"
-        
+        secure: true
     }
 
     return res
@@ -165,23 +163,28 @@ const refreshAccessToken = asyncHandler( async (req,res) => {
             incomingRefreshToken,
             process.env.REFRESH_TOKEN_SECRET
        )
-    
-        const user = User.findById(decodedToken?._id)
+       
+
+        const user = await User.findById(decodedToken?._id)
     
         if (!user) {
             throw new ApiError(401, "Invalid refresh Token")
         }
-    
+
         if (incomingRefreshToken !== user?.refreshToken) {
             throw new ApiError(401, "Refresh Token is expired or used")
         }
     
-        const options = {
+        const options = { 
             httpOnly:true,
-            secure:true
+            secure:true            
         }
     
-        const { accessToken, new_refreshToken } = await generateAccessAndRefreshTokens(user._id)
+        const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id)
+
+        
+
+        
     
         return res
         .status(200)
@@ -190,7 +193,7 @@ const refreshAccessToken = asyncHandler( async (req,res) => {
         .json(
             new ApiResponse(
                 200,
-                {accessToken, refreshToken: new_refreshToken},
+                {accessToken, refreshToken: refreshToken},
                 "Access token refreshed"
             )
         )
@@ -200,11 +203,19 @@ const refreshAccessToken = asyncHandler( async (req,res) => {
 })
 
 const changeCurrentPassword = asyncHandler(async(req,res) => {
-    const {oldPassword, newPassword} = req.body
+    const {username, oldPassword, newPassword} = req.body
 
-    const user = await User.findById(req.user?._id)
+    console.log(username, oldPassword, newPassword)
 
-    isOldPasswordCorrect = await user.isPasswordCorrect(oldPassword)
+    if (!username) {
+        const user = await User.findById(req.user?._id)
+    }
+
+    const user = await User.findOne({'username':username})
+
+    console.log(user)
+
+    const isOldPasswordCorrect = await user.isPasswordCorrect(oldPassword)
 
     if (!isOldPasswordCorrect) {
         throw new ApiError(400, "Invalid old password")
@@ -337,7 +348,7 @@ const getUSerChannelProfile = asyncHandler(async(req,res) => {
             $lookup: {
                 from: "subscriptions",
                 localField: "_id",
-                foreignField: "subscribers",
+                foreignField: "subscriber",
                 as: "subscribedTo"
             }
         },
@@ -351,7 +362,7 @@ const getUSerChannelProfile = asyncHandler(async(req,res) => {
                 },
                 isSubscribed : {
                     $cond: {
-                        if : {$in : [req.user?._id, "$subscribers.subscriber"]},
+                        if : {$in : [req.user._id, "$subscribers.subscriber"]},
                         then: true,
                         else: false
                     }
@@ -367,13 +378,13 @@ const getUSerChannelProfile = asyncHandler(async(req,res) => {
                 avatar:1,
                 coverImage:1,
                 email:1,
-
+                isSubscribed:1
             }
         }
     ])
-
+    
     if (!channel?.length)  {
-        return res.status(404).json( new ApiError(404, "Channel does not exists"))
+        throw new ApiError(404, "Channel does not exists !")
     }
 
     return res

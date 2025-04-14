@@ -22,7 +22,7 @@ const uploadOnCloud = async (localFilePath) => {
         return response;
     }
     catch(error) {
-        fs.unlinkSync(localFilePath) //remove the locally save temporary file
+        fs.unlinkSync(localFilePath) //remove the locally saved temporary file
         return null
     }
 }

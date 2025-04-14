@@ -5,6 +5,7 @@ import { uploadOnCloud } from "../utils/cloudinary.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { User } from "../models/user.model.js";
 import mongoose from "mongoose";
+import { ObjectId } from 'mongodb';
 
 const uploadVideo = asyncHandler(async(req,res) => {
     const {title, description, owner} = req.body 
@@ -17,8 +18,9 @@ const uploadVideo = asyncHandler(async(req,res) => {
         throw new ApiError(400,"All fields are required!")
     }
 
-    
-    
+    if (req.files) {
+            throw new ApiError(401,"Files are required!")
+    }
 
     const videoLocalPath = req.files?.videoFile[0]?.path
     const thumbnailLocalPath = req.files?.thumbnailFile[0]?.path
@@ -34,12 +36,12 @@ const uploadVideo = asyncHandler(async(req,res) => {
     const thumbnail = await uploadOnCloud(thumbnailLocalPath)
     const video = await uploadOnCloud(videoLocalPath)
 
-
     if (!video) {
-        throw new ApiError(401, "Video file is required!")
+        throw new ApiError(401, "Video upload failed")
     }
+
     if (!thumbnail) {
-        throw new ApiError(401, "Thumbnail is required!")
+        throw new ApiError(401, "Thumbnail upload failed")
     }
 
     const addVideo = await Video.create({
@@ -59,7 +61,6 @@ const uploadVideo = asyncHandler(async(req,res) => {
 
 })
 
-
 const playVideo = asyncHandler(async(req, res) => {
     const id = req.params.id
 
@@ -67,28 +68,46 @@ const playVideo = asyncHandler(async(req, res) => {
         throw new ApiError(400,"Video is missing")
     }
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        throw new ApiError(400, "Invalid Video ID format");
-    }
-
-    const video = await Video.findByIdAndUpdate(id).select(
-        "-isPublished "
-    )
-
     await Video.updateOne({ _id: id }, { 
         $inc: { views: 1 } 
     });
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new ApiError(400, "Invalid Video ID format");
+    }
 
+    const video = await Video.aggregate([
+        { $match: { _id: new ObjectId(id.toString()) } }, 
+        {
+            $addFields: {
+                likeCount: { $size: { $ifNull: ["$likes", []] } },  
+                dislikeCount: { $size: { $ifNull: ["$dislikes", []] } } 
+            }
+        },
+        { 
+            $project: { 
+                videoFile:1,
+                thumbnail:1,
+                title :1,
+                description :1,
+                duration :1,
+                views :1,
+                isPublished :1,
+                owner :1,
+                likeCount:1,
+                dislikeCount:1
+            } 
+        }
+    ]);
+    
     if (!video) {
         throw new ApiError(400,"This video doesn't exist!")
     }
 
     return res
     .status(200)
-    .json(new ApiResponse(200,video,"Video found"))
+    .json(new ApiResponse(200,video[0],"Video found"))
 })
-
 
 const watchHistory = asyncHandler(async(req,res) => {
     const owner_id = req.user._id
@@ -204,12 +223,76 @@ const updateWatchHistory = asyncHandler(async(req,res) => {
 
     return res
     .status(200)
-    .json(new ApiError(200,{},"Watch History Updated"))
+    .json(new ApiResponse(200,{},"Watch History Updated"))
 
 
 })
 
+const increaseLike = asyncHandler(async(req,res) => {
+    const videoId = req.params.id
+    const _id = req.user._id
 
+    if (!_id) {
+        throw new ApiError(400, "User not logged in !")
+    }
+
+    const video = await Video.findById(videoId)
+
+    if (!video) {
+        throw new ApiError(401,'Video not found')
+    }
+
+    const hasLiked = video.likes.includes(_id);
+    const hasDisliked = video.dislikes.includes(_id);
+
+        if (hasLiked) {
+            video.likes.pull(_id);
+        } else {
+            video.likes.push(_id);
+            if (hasDisliked) {
+                video.dislikes.pull(_id)
+            }
+        }
+        await video.save();
+
+    return res 
+    .status(200)
+    .json(new ApiResponse(200,{},'Like Added'))
+})
+
+const increaseDislike = asyncHandler(async(req,res) => {
+    const videoId = req.params.id
+    const _id = req.user._id
+
+    if (!_id) {
+        throw new ApiError(400, "User not logged in !")
+    }
+
+    const video = await Video.findById(videoId)
+
+    if (!video) {
+        throw new ApiError(401,'Video not found')
+    }
+
+    const hasDisliked = video.dislikes.includes(_id);
+    const hasLiked = video.likes.includes(_id);
+
+
+        if (hasDisliked) {
+            video.dislikes.pull(_id);
+            
+        } else {
+            video.dislikes.push(_id);
+            if (hasLiked) {
+                video.likes.pull(_id)
+            }
+        }
+        await video.save();
+
+    return res 
+    .status(200)
+    .json(new ApiResponse(200,{},'Like Added'))
+})
 
 
 export {
@@ -217,5 +300,7 @@ export {
     uploadVideo,
     watchHistory,
     channelVideos,
-    updateWatchHistory
+    updateWatchHistory,
+    increaseLike,
+    increaseDislike
 }
