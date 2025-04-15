@@ -116,7 +116,11 @@ const watchHistory = asyncHandler(async(req,res) => {
         throw new ApiError(401, "User Unauthorized")
     }
 
+    console.log(owner_id)
+
     const history = await User.findById(owner_id).select("watchHistory")
+
+    console.log(history)
 
     if (!history) {
         throw new ApiError(400, "Couldn't find User History")
@@ -174,7 +178,7 @@ const watchHistory = asyncHandler(async(req,res) => {
         $project: { _id:0 , historyVideo:1 } 
         }
     ])
-    
+
     console.log(historyVideos)
 
     return res
