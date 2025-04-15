@@ -31,7 +31,7 @@ try {
         next()
 
 } catch (error) {
-        
+    return next(new ApiError(401, error.message || "Unauthorized"))
 }
 
 })
