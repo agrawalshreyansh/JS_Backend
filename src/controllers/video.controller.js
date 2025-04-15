@@ -174,7 +174,8 @@ const watchHistory = asyncHandler(async(req,res) => {
         $project: { _id:0 , historyVideo:1 } 
         }
     ])
-
+    
+    console.log(historyVideos)
 
     return res
     .status(200)

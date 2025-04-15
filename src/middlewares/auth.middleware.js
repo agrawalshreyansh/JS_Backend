@@ -25,6 +25,7 @@ try {
         }
     
         req.user = user;
+        
         next()
 
 } catch (error) {
