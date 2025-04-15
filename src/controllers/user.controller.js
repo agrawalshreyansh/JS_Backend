@@ -114,7 +114,7 @@ const loginUser = asyncHandler(async (req,res) => {
 
     const options = {
         httpOnly : true,
-        secure: true
+        secure:true
     }
 
     return res
@@ -141,7 +141,6 @@ const logoutUser = asyncHandler(async (req, res) => {
     const options = {
         httpOnly : true,
         secure:true,
-        sameSite: "None"
     }
 
     return res
@@ -182,9 +181,6 @@ const refreshAccessToken = asyncHandler( async (req,res) => {
     
         const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id)
 
-        
-
-        
     
         return res
         .status(200)
@@ -326,9 +322,12 @@ const getUSerChannelProfile = asyncHandler(async(req,res) => {
     
     const {username} = req.params
 
+    
+
     if (!username?.trim()) {
         throw new ApiError(400, "username is missing")
     }
+    
 
     const channel = await User.aggregate([
         {
@@ -362,7 +361,7 @@ const getUSerChannelProfile = asyncHandler(async(req,res) => {
                 },
                 isSubscribed : {
                     $cond: {
-                        if : {$in : [req.user._id, "$subscribers.subscriber"]},
+                        if : {$in : [req.user?._id, "$subscribers.subscriber"]},
                         then: true,
                         else: false
                     }
@@ -386,6 +385,7 @@ const getUSerChannelProfile = asyncHandler(async(req,res) => {
     if (!channel?.length)  {
         throw new ApiError(404, "Channel does not exists !")
     }
+
 
     return res
     .status(200)

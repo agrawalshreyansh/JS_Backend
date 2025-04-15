@@ -25,7 +25,7 @@ router.route("/login").post(loginUser)
 
 router.route("/logout").post(verifyJWT, logoutUser)
 router.route("/refresh-token").post(refreshAccessToken)
-router.route("/user/:username").get(verifyJWTOptionally, getUSerChannelProfile)
+router.route("/user/:username").get(getUSerChannelProfile)
 router.route('/changepassword').get(changeCurrentPassword)
 
 export default router
