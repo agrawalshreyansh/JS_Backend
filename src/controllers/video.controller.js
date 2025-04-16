@@ -3,7 +3,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Video } from "../models/video.model.js";
 import { uploadOnCloud } from "../utils/cloudinary.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-
+import { User } from "../models/user.model.js";
 import mongoose from "mongoose";
 import { ObjectId } from 'mongodb';
 
@@ -77,29 +77,6 @@ const playVideo = asyncHandler(async(req, res) => {
         throw new ApiError(400, "Invalid Video ID format");
     }
 
-    // const video = await Video.aggregate([
-    //     { $match: { _id: new ObjectId(id.toString()) } }, 
-    //     {
-    //         $addFields: {
-    //             likeCount: { $size: { $ifNull: ["$likes", []] } },  
-    //             dislikeCount: { $size: { $ifNull: ["$dislikes", []] } } 
-    //         }
-    //     },
-    //     { 
-    //         $project: { 
-    //             videoFile:1,
-    //             thumbnail:1,
-    //             title :1,
-    //             description :1,
-    //             duration :1,
-    //             views :1,
-    //             isPublished :1,
-    //             owner :1,
-    //             likeCount:1,
-    //             dislikeCount:1
-    //         } 
-    //     }
-    // ]);
 
     const video = await Video.aggregate([
         { $match: { _id: new ObjectId(id.toString()) } },
@@ -260,8 +237,8 @@ const channelVideos = asyncHandler(async(req,res) => {
     if (!username) {
         throw new ApiError(400,"Channel Doesn't Exist")
     }
-
-    const owner_id = await User.find({username : username}).select("_id")
+    
+    const owner_id = await User.findOne({username}).select("_id")
 
     if (!owner_id) {
         throw new ApiError(401,"Invalid username")

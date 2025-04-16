@@ -12,6 +12,8 @@ const createSubscriber = asyncHandler(async (req,res) => {
     const channelName = req.params.id
     const userId = req.user._id
 
+
+
     const channel = await User.findOne({username:channelName})
 
     const channelId = channel._id
@@ -32,7 +34,6 @@ const createSubscriber = asyncHandler(async (req,res) => {
         throw new ApiError(402,"You cannot subscribe to you own Channel")
     }
 
-   
 
     const existingSubscription = await Subscription.findOne({
         subscriber: userId,
