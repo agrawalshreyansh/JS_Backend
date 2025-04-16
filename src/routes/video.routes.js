@@ -2,7 +2,7 @@ import { Router } from "express";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import {playVideo, uploadVideo, watchHistory, channelVideos, updateWatchHistory, increaseLike, increaseDislike} from "../controllers/video.controller.js"
-
+import { verifyJWTOptionally } from "../middlewares/optionalAuth.middleware.js";
 
 const router = Router()
 
@@ -21,11 +21,11 @@ router.route("/upload").post(
     uploadVideo
 )
 
-router.route("/play/:id").get(playVideo)
-router.route("/history").get(verifyJWT,watchHistory)
+router.route("/play/:id").get(verifyJWTOptionally, playVideo)
+router.route("/history").get(verifyJWT, watchHistory)
 router.route("/getVideos/:username").get(channelVideos)
-router.route('/:id/updateHistory').get(verifyJWT,updateWatchHistory)
-router.route('/:id/like').get(verifyJWT,increaseLike)
-router.route('/:id/dislike').get(verifyJWT,increaseDislike)
+router.route('/:id/updateHistory').get(verifyJWT, updateWatchHistory)
+router.route('/:id/like').get(verifyJWT, increaseLike)
+router.route('/:id/dislike').get(verifyJWT, increaseDislike)
 
 export default router

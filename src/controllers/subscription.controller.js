@@ -20,8 +20,6 @@ const createSubscriber = asyncHandler(async (req,res) => {
         throw new ApiError(401,"Channel Doesn't Exist!")
     }
 
-    console.log(channelId,userId)
-
     if (!channelId) {
         throw new ApiError(401,"Channel Id not recieved!")
     }
@@ -34,7 +32,7 @@ const createSubscriber = asyncHandler(async (req,res) => {
         throw new ApiError(402,"You cannot subscribe to you own Channel")
     }
 
-    console.log(userId === channelId)
+   
 
     const existingSubscription = await Subscription.findOne({
         subscriber: userId,

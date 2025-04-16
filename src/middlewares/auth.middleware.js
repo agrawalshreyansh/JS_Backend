@@ -13,8 +13,6 @@ try {
         }
 
         const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
-
-        
        
         if (!decodedToken) {
             throw new ApiError(500, "Token expired")

@@ -3,9 +3,10 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Video } from "../models/video.model.js";
 import { uploadOnCloud } from "../utils/cloudinary.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { User } from "../models/user.model.js";
+
 import mongoose from "mongoose";
 import { ObjectId } from 'mongodb';
+
 
 const uploadVideo = asyncHandler(async(req,res) => {
     const {title, description, owner} = req.body 
@@ -76,29 +77,96 @@ const playVideo = asyncHandler(async(req, res) => {
         throw new ApiError(400, "Invalid Video ID format");
     }
 
+    // const video = await Video.aggregate([
+    //     { $match: { _id: new ObjectId(id.toString()) } }, 
+    //     {
+    //         $addFields: {
+    //             likeCount: { $size: { $ifNull: ["$likes", []] } },  
+    //             dislikeCount: { $size: { $ifNull: ["$dislikes", []] } } 
+    //         }
+    //     },
+    //     { 
+    //         $project: { 
+    //             videoFile:1,
+    //             thumbnail:1,
+    //             title :1,
+    //             description :1,
+    //             duration :1,
+    //             views :1,
+    //             isPublished :1,
+    //             owner :1,
+    //             likeCount:1,
+    //             dislikeCount:1
+    //         } 
+    //     }
+    // ]);
+
     const video = await Video.aggregate([
-        { $match: { _id: new ObjectId(id.toString()) } }, 
+        { $match: { _id: new ObjectId(id.toString()) } },
+        {
+          $addFields: {
+            likeCount: { $size: { $ifNull: ["$likes", []] } },
+            dislikeCount: { $size: { $ifNull: ["$dislikes", []] } }
+          }
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "owner",
+            foreignField: "_id",
+            as: "ownerDetails"
+          }
+        },
+        { $unwind: "$ownerDetails" },
+        {
+          $lookup: {
+            from: "subscriptions",
+            localField: "ownerDetails._id",
+            foreignField: "channel",
+            as: "subs"
+          } 
+        },
         {
             $addFields: {
-                likeCount: { $size: { $ifNull: ["$likes", []] } },  
-                dislikeCount: { $size: { $ifNull: ["$dislikes", []] } } 
+              subscriberIds: {
+                $map: {
+                  input: "$subs",
+                  as: "sub",
+                  in: "$$sub.subscriber"
+                }
+              }
             }
+          },
+        {
+          $addFields: {
+            subscribers: { $size: "$subs" },
+            isSubscribed: {
+                $in: [new ObjectId(req.user?._id), "$subscriberIds"]
+              }
+          }
+          
         },
-        { 
-            $project: { 
-                videoFile:1,
-                thumbnail:1,
-                title :1,
-                description :1,
-                duration :1,
-                views :1,
-                isPublished :1,
-                owner :1,
-                likeCount:1,
-                dislikeCount:1
-            } 
+        {
+          $project: {
+            videoFile: 1,
+            thumbnail: 1,
+            title: 1,
+            description: 1,
+            duration: 1,
+            views: 1,
+            isPublished: 1,
+            likeCount: 1,
+            dislikeCount: 1,
+            owner: "$ownerDetails.username",
+            owner_image : "$ownerDetails.avatar",
+            subscribers: 1,
+            isSubscribed: 1,
+            subs:1
+          }
         }
-    ]);
+      ]);
+      
+      
     
     if (!video) {
         throw new ApiError(400,"This video doesn't exist!")
