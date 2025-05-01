@@ -11,7 +11,7 @@ try {
         if (!token) {
             const user = {_id:null};
             req.user = user
-            next()
+            return next()
         }
     
         const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)

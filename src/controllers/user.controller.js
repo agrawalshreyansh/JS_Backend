@@ -52,7 +52,7 @@ const registerUser = asyncHandler( async (req, res) => {
     }
 
     if (!avatarLocalPath) {
-        throw new ApiError(400, "Avatar file is required")
+        throw new ApiError(400, "Avatar file is required 1")
     }
 
     const avatar = await uploadOnCloud(avatarLocalPath)
@@ -105,7 +105,7 @@ const loginUser = asyncHandler(async (req,res) => {
    const isPasswordValid = await user.isPasswordCorrect(password)
 
     if (!isPasswordValid) {
-        throw new ApiError(401, "Invalid Password")
+        throw new ApiError(402, "Invalid Password")
     }
 
     const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(user._id)
@@ -378,7 +378,8 @@ const getUSerChannelProfile = asyncHandler(async(req,res) => {
                 avatar:1,
                 coverImage:1,
                 email:1,
-                isSubscribed:1
+                isSubscribed:1,
+                
             }
         }
     ])

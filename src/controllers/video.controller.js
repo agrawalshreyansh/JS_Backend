@@ -138,14 +138,15 @@ const playVideo = asyncHandler(async(req, res) => {
             owner_image : "$ownerDetails.avatar",
             subscribers: 1,
             isSubscribed: 1,
-            subs:1
+            subs:1,
+            createdAt : 1,
+            updatedAt:1
           }
         }
       ]);
       
-      
     
-    if (!video) {
+    if (video.length === 0) {
         throw new ApiError(400,"This video doesn't exist!")
     }
 
@@ -258,6 +259,7 @@ const channelVideos = asyncHandler(async(req,res) => {
 const updateWatchHistory = asyncHandler(async(req,res) => {
     const videoId = req.params.id
     const _id = req.user._id
+    console.log(videoId)
 
     if (!_id) {
         throw new ApiError(400, "User not logged in !")
