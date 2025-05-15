@@ -9,18 +9,18 @@ import { ObjectId } from 'mongodb';
 
 
 const uploadVideo = asyncHandler(async(req,res) => {
-    const {title, description, owner} = req.body 
+    const {title, description, playlist,category} = req.body 
 
     const owner_id = req.user._id
 
     if ( 
-        [title, description, owner].some((field) => field?.trim() === "")
+        [title, description, playlist,category].some((field) => field?.trim() === "")
     ){
         throw new ApiError(400,"All fields are required!")
     }
 
-    if (req.files) {
-            throw new ApiError(401,"Files are required!")
+    if (!req.files) {
+            throw new ApiError(400,"Files are required!")
     }
 
     const videoLocalPath = req.files?.videoFile[0]?.path
@@ -50,6 +50,8 @@ const uploadVideo = asyncHandler(async(req,res) => {
         thumbnail : thumbnail.url,
         title,
         description,
+        playlist,
+        category,
         owner:owner_id,
         duration: video.duration,
     })
@@ -69,82 +71,83 @@ const playVideo = asyncHandler(async(req, res) => {
         throw new ApiError(400,"Video is missing")
     }
 
-    await Video.updateOne({ _id: id }, { 
-        $inc: { views: 1 } 
-    });
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        throw new ApiError(400, "Invalid Video ID format");
+        throw new ApiError(400, "Invalid Video ID");
     }
-
+    
+    console.log(req.user._id);
+    
 
     const video = await Video.aggregate([
         { $match: { _id: new ObjectId(id.toString()) } },
         {
-          $addFields: {
-            likeCount: { $size: { $ifNull: ["$likes", []] } },
-            dislikeCount: { $size: { $ifNull: ["$dislikes", []] } }
-          }
+            $addFields: {
+                likeCount: { $size: { $ifNull: ["$likes", []] } },
+                dislikeCount: { $size: { $ifNull: ["$dislikes", []] } }
+            }
         },
         {
-          $lookup: {
-            from: "users",
-            localField: "owner",
-            foreignField: "_id",
-            as: "ownerDetails"
-          }
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "ownerDetails"
+            }
         },
         { $unwind: "$ownerDetails" },
         {
-          $lookup: {
-            from: "subscriptions",
-            localField: "ownerDetails._id",
-            foreignField: "channel",
-            as: "subs"
-          } 
+            $lookup: {
+                from: "subscriptions",
+                localField: "ownerDetails._id",
+                foreignField: "channel",
+                as: "subs"
+            }
         },
         {
             $addFields: {
-              subscriberIds: {
-                $map: {
-                  input: "$subs",
-                  as: "sub",
-                  in: "$$sub.subscriber"
+                subscriberIds: {
+                    $map: {
+                        input: "$subs",
+                        as: "sub",
+                        in: "$$sub.subscriber"
+                    }
                 }
-              }
             }
-          },
-        {
-          $addFields: {
-            subscribers: { $size: "$subs" },
-            isSubscribed: {
-                $in: [new ObjectId(req.user?._id), "$subscriberIds"]
-              }
-          }
-          
         },
         {
-          $project: {
-            videoFile: 1,
-            thumbnail: 1,
-            title: 1,
-            description: 1,
-            duration: 1,
-            views: 1,
-            isPublished: 1,
-            likeCount: 1,
-            dislikeCount: 1,
-            owner: "$ownerDetails.username",
-            owner_image : "$ownerDetails.avatar",
-            subscribers: 1,
-            isSubscribed: 1,
-            subs:1,
-            createdAt : 1,
-            updatedAt:1
-          }
+            $addFields: {
+                subscribers: { $size: "$subs" },
+                isSubscribed: {
+                    $in: [new ObjectId(req.user?._id.toString()), "$subscriberIds"]
+                  }
+            }
+        },
+        {
+            $project: {
+                videoFile: 1,
+                thumbnail: 1,
+                title: 1,
+                description: 1,
+                duration: 1,
+                views: 1,
+                subscriberIds : 1,
+                isPublished: 1,
+                likeCount: 1,
+                dislikeCount: 1,
+                owner: "$ownerDetails.username",
+                owner_image: "$ownerDetails.avatar",
+                subscribers: 1,
+                isSubscribed: 1,
+                createdAt: 1,
+                updatedAt: 1
+            }
         }
-      ]);
-      
+    ]);
+    
+      if (!video) {
+        throw new ApiError(400, "This video doesn't exist!");
+      }
     
     if (video.length === 0) {
         throw new ApiError(400,"This video doesn't exist!")
@@ -245,7 +248,7 @@ const channelVideos = asyncHandler(async(req,res) => {
         throw new ApiError(401,"Invalid username")
     }
 
-    const userVideos = await Video.find({owner:owner_id}).select("thumbnail title views _id")
+    const userVideos = await Video.find({owner:owner_id}).select("thumbnail title views _id duration createdAt ").sort({createdAt:-1})
 
     if (!userVideos) {
         throw new ApiError(401,'Videos fetch failed')
@@ -256,28 +259,36 @@ const channelVideos = asyncHandler(async(req,res) => {
     .json(new ApiResponse(200,userVideos,"Videos fetched"))
 })
 
-const updateWatchHistory = asyncHandler(async(req,res) => {
-    const videoId = req.params.id
-    const _id = req.user._id
-    console.log(videoId)
+const updateWatchHistory = asyncHandler(async (req, res) => {
+    const videoId = req.params.id;
+    const _id = req.user._id;
 
     if (!_id) {
-        throw new ApiError(400, "User not logged in !")
+        throw new ApiError(400, "User not logged in !");
     }
 
-    const userHistory = await User.findById(_id).select('watchHistory')
+   
+    const userHistory = await User.findById(_id).select('watchHistory');
 
+    
+    await Video.updateOne({ _id: videoId }, { 
+        $inc: { views: 1 } 
+    });
+
+    
     if (userHistory.watchHistory[0]?.toString() !== videoId.toString()) {
-        await User.findByIdAndUpdate(_id,
-            { $push: { watchHistory: { $each: [videoId], $position: 0 } } }, {new:true})
+       
+        await User.findByIdAndUpdate(_id, 
+            { $push: { watchHistory: { $each: [videoId], $position: 0 } } }, 
+            { new: true }
+        );
     }
 
     return res
-    .status(200)
-    .json(new ApiResponse(200,{},"Watch History Updated"))
+        .status(200)
+        .json(new ApiResponse(200, {}, "Watch History Updated"));
+});
 
-
-})
 
 const increaseLike = asyncHandler(async(req,res) => {
     const videoId = req.params.id
@@ -306,9 +317,11 @@ const increaseLike = asyncHandler(async(req,res) => {
         }
         await video.save();
 
+        const likeCount = video.likes.length;
+
     return res 
     .status(200)
-    .json(new ApiResponse(200,{},'Like Added'))
+    .json(new ApiResponse(200,{likeCount},'Like Added'))
 })
 
 const increaseDislike = asyncHandler(async(req,res) => {

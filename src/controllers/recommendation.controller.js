@@ -23,6 +23,7 @@ const HomeVideos = asyncHandler(async (req,res) => {
             thumbnail: 1,
             views: 1,
             createdAt: 1,
+            duration: 1,
             owner: {
               _id: 1,
               username: 1,

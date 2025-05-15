@@ -17,7 +17,7 @@ router.route("/upload").post(
             name : "thumbnailFile" ,
             maxCount : 1
         }
-    ]),
+    ]), 
     uploadVideo
 )
 

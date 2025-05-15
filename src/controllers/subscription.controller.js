@@ -10,30 +10,22 @@ import {Video} from '../models/video.model.js'
 const createSubscriber = asyncHandler(async (req,res) => {
 
     const channelName = req.params.id
+
     const userId = req.user._id
 
+    let channelId = await User.findOne({username: channelName}).select("_id")
 
-
-    const channel = await User.findOne({username:channelName})
-
-    const channelId = channel._id
+    
 
     if (!channelId) {
         throw new ApiError(401,"Channel Doesn't Exist!")
     }
 
-    if (!channelId) {
-        throw new ApiError(401,"Channel Id not recieved!")
-    }
-
-    if (!User.findById(channelId)) {
-        throw new ApiError(401,"Channel Doesn't Exist!")
-    }
+    channelId = channelId._id
 
     if (userId.equals(channelId)) {
         throw new ApiError(402,"You cannot subscribe to you own Channel")
     }
-
 
     const existingSubscription = await Subscription.findOne({
         subscriber: userId,
