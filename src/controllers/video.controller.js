@@ -76,8 +76,6 @@ const playVideo = asyncHandler(async(req, res) => {
         throw new ApiError(400, "Invalid Video ID");
     }
     
-    console.log(req.user._id);
-    
 
     const video = await Video.aggregate([
         { $match: { _id: new ObjectId(id.toString()) } },

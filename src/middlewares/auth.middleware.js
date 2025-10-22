@@ -10,20 +10,20 @@ try {
        
 
         if (!token) {
-            throw new ApiError(401,"Unauthorized request")
+            throw new ApiError(401,"Unauthorized request - No token provided")
         }
 
         const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
 
         
         if (!decodedToken) {
-            throw new ApiError(500, "Token expired")
+            throw new ApiError(401, "Invalid token")
         }
     
         const user = await User.findById(decodedToken?._id).select("-password -refreshToken")
     
         if (!user) {
-            throw new ApiError(402, "Invalid Access Token")
+            throw new ApiError(401, "Invalid Access Token")
         }
     
         req.user = user;
@@ -31,6 +31,16 @@ try {
         next()
 
 } catch (error) {
+
+    // Check if the error is due to token expiration
+    if (error.name === 'TokenExpiredError') {
+        return next(new ApiError(403, "Access token has expired"))
+    }
+    
+    // For other JWT errors (invalid signature, malformed, etc.)
+    if (error.name === 'JsonWebTokenError') {
+        return next(new ApiError(401, "Invalid access token"))
+    }
 
     return next(new ApiError(401, error.message || "Unauthorized"))
 }

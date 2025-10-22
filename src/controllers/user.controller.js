@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js"
 import { uploadOnCloud } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import jwt from "jsonwebtoken"
+import mongoose from "mongoose"
 
 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -44,16 +45,18 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(409, "User with email or username already exists")
     }
 
-    const avatarLocalPath = req.files?.avatar[0]?.path
+    let avatarLocalPath;
+    if (req.files && Array.isArray(req.files.avatar) && req.files.avatar.length > 0) {
+        avatarLocalPath = req.files.avatar[0].path
+    }
+
+    if (!avatarLocalPath) {
+        throw new ApiError(400, "Avatar file is required")
+    }
 
     let coverImageLocalPath;
     if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
         coverImageLocalPath = req.files.coverImage[0].path
-    }
-
-
-    if (!avatarLocalPath) {
-        throw new ApiError(400, "Avatar file is required 1")
     }
 
     const avatar = await uploadOnCloud(avatarLocalPath)
@@ -119,9 +122,6 @@ const loginUser = asyncHandler(async (req, res) => {
         sameSite: "None"
     }
 
-
-    console.log(refreshToken, accessToken)
-
     return res
         .status(200)
         .cookie("accessToken", accessToken, options)
@@ -140,7 +140,7 @@ const loginUser = asyncHandler(async (req, res) => {
 })
 
 const logoutUser = asyncHandler(async (req, res) => {
-    const userId = User.findByIdAndUpdate(req.user._id,
+    const userId = await User.findByIdAndUpdate(req.user._id,
         { $set: { refreshToken: undefined } }, { new: true }
     )
     const options = {
@@ -208,15 +208,11 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 const changeCurrentPassword = asyncHandler(async (req, res) => {
     const { username, oldPassword, newPassword } = req.body
 
-    console.log(username, oldPassword, newPassword)
-
     if (!username) {
         const user = await User.findById(req.user?._id)
     }
 
     const user = await User.findOne({ 'username': username })
-
-    console.log(user)
 
     const isOldPasswordCorrect = await user.isPasswordCorrect(oldPassword)
 
@@ -325,14 +321,13 @@ const updateUserCover = asyncHandler(async (req, res) => {
         )
 })
 
-const getUSerChannelProfile = asyncHandler(async (req, res) => {
+const getUserChannelProfile = asyncHandler(async (req, res) => {
 
     const { username } = req.params
 
     if (!username?.trim()) {
         throw new ApiError(400, "username is missing")
     }
-
 
     const channel = await User.aggregate([
         {
@@ -366,7 +361,17 @@ const getUSerChannelProfile = asyncHandler(async (req, res) => {
                 },
                 isSubscribed: {
                     $cond: {
-                        if: { $in: [req.user?._id, "$subscribers.subscriber"] },
+                        if: {
+                            $and: [
+                                { $ne: [req.user?._id, null] },
+                                { 
+                                    $in: [
+                                        new mongoose.Types.ObjectId(req.user?._id), 
+                                        "$subscribers.subscriber"
+                                    ] 
+                                }
+                            ]
+                        },
                         then: true,
                         else: false
                     }
@@ -460,7 +465,7 @@ export {
     updateAccountDetails,
     updateUserAvatar,
     updateUserCover,
-    getUSerChannelProfile,
+    getUserChannelProfile,
     authenticateUser,
     deleteHistory
 }  
