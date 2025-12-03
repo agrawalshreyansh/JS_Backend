@@ -89,7 +89,7 @@ The server will run on `http://localhost:8000` and start a keep-alive cron job t
   - Params: `username`.
   - Response: Channel details including subscribers count, etc.
 
-- **GET** `/changepassword`
+- **PUT** `/changepassword`
   - Description: Change user password (requires auth).
   - Body: `username`, `oldPassword`, `newPassword`.
 
@@ -97,7 +97,7 @@ The server will run on `http://localhost:8000` and start a keep-alive cron job t
   - Description: Authenticate user status (requires auth).
   - Response: User data.
 
-- **POST** `/deletehistory`
+- **PUT** `/deletehistory`
   - Description: Delete a video from watch history (requires auth).
   - Body: `historyId`.
 
@@ -119,21 +119,21 @@ The server will run on `http://localhost:8000` and start a keep-alive cron job t
   - Description: Get videos from a channel.
   - Params: `username`.
 
-- **GET** `/:id/updateHistory`
+- **PATCH** `/:id/updateHistory`
   - Description: Update watch history and increment views (requires auth).
   - Params: `id` (video ID).
 
-- **GET** `/:id/like`
+- **PATCH** `/:id/like`
   - Description: Like or unlike a video (requires auth).
   - Params: `id` (video ID).
   - Response: Like count.
 
-- **GET** `/:id/dislike`
+- **PATCH** `/:id/dislike`
   - Description: Dislike or undislike a video (requires auth).
   - Params: `id` (video ID).
 
 ### Subscription Routes (`/api/v1/subscriptions`)
-- **POST** `/subscribeTo/:id`
+- **PUT** `/subscribeTo/:id`
   - Description: Subscribe or unsubscribe to a channel (requires auth).
   - Params: `id` (channel username).
 

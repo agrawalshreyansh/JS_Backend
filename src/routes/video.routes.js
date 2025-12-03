@@ -24,8 +24,8 @@ router.route("/upload").post(
 router.route("/play/:id").get(verifyJWTOptionally, playVideo)
 router.route("/history").get(verifyJWT, watchHistory)
 router.route("/getVideos/:username").get(channelVideos)
-router.route('/:id/updateHistory').get(verifyJWT, updateWatchHistory)
-router.route('/:id/like').get(verifyJWT, increaseLike)
-router.route('/:id/dislike').get(verifyJWT, increaseDislike)
+router.route('/:id/updateHistory').patch(verifyJWT, updateWatchHistory)
+router.route('/:id/like').patch(verifyJWT, increaseLike)
+router.route('/:id/dislike').patch(verifyJWT, increaseDislike)
 
 export default router

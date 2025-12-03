@@ -3,7 +3,7 @@ import cron from "node-cron";
 const startKeepAliveJob = (serverUrl) => {
     // Schedule a cron job to run every 20 minutes
     // Pattern: '*/20 * * * *' means every 20 minutes
-    const job = cron.schedule('*/20 * * * *', async () => {
+    const job = cron.schedule('*/10 * * * *', async () => {
         try {
             const timestamp = new Date().toISOString();
             console.log(`[${timestamp}] Keep-alive ping initiated...`);
@@ -22,7 +22,7 @@ const startKeepAliveJob = (serverUrl) => {
         }
     });
 
-    console.log('🕐 Keep-alive cron job started - Server will be pinged every 20 minutes');
+    console.log('🕐 Keep-alive cron job started - Server will be pinged every 10 minutes');
     
     return job;
 };

@@ -26,8 +26,8 @@ router.route("/login").post(loginUser)
 router.route("/logout").post(verifyJWT, logoutUser)
 router.route("/refresh-token").post(refreshAccessToken)
 router.route("/user/:username").get(verifyJWTOptionally,getUserChannelProfile)
-router.route('/changepassword').get(changeCurrentPassword)
+router.route('/changepassword').put(changeCurrentPassword)
 router.route('/authenticateStatus').get(verifyJWT,authenticateUser)
-router.route('/deletehistory').post(verifyJWT,deleteHistory)
+router.route('/deletehistory').put(verifyJWT,deleteHistory)
 
 export default router
