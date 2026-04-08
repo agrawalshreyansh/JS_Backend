@@ -1,17 +1,29 @@
 {
-  "name": "professional-js-backend",
+  "name": "reelify-backend",
   "version": "1.0.0",
-  "description": "nodejs-backend",
+  "description": "Reelify backend API - TypeScript + Express + MongoDB",
   "license": "ISC",
   "author": "Shrage",
   "type": "module",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "dev": "nodemon -r dotenv/config --experimental src/index.js"
+    "dev": "ts-node -r dotenv/config --esm src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "nodemon": "^3.1.9",
-    "prettier": "^3.4.2"
+    "prettier": "^3.4.2",
+    "typescript": "^5.3.3",
+    "ts-node": "^10.9.2",
+    "@types/node": "^20.10.6",
+    "@types/express": "^4.17.21",
+    "@types/cors": "^2.8.17",
+    "@types/cookie-parser": "^1.4.7",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/multer": "^1.4.11",
+    "@types/bcrypt": "^5.0.2"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
