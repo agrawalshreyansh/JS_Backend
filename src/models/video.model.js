@@ -1,71 +1,66 @@
-import mongoose,{Schema} from "mongoose";
-
+import mongoose, { Schema } from "mongoose";
+import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const videoSchema = new Schema(
     {
-        videoFile : {
-            type:String,
-            required:true
-        },
-        thumbnail: {
-            type:String,
-            required:true
-        },
-        title : {
-            type : String,
-            required:true
-        }, 
-        description : {
-            type : String,
+        videoFile: {
+            type: String,
             required: true
         },
-        duration : {
+        thumbnail: {
+            type: String,
+            required: true
+        },
+        title: {
+            type: String,
+            required: true
+        },
+        description: {
+            type: String,
+            required: true
+        },
+        duration: {
             type: Number,
-            required:true
+            required: true
         },
-        views : {
-            type:Number,
-            default:0
-        }, 
-        category : {
+        views: {
+            type: Number,
+            default: 0
+        },
+        category: {
             type: String,
-            required:true
+            required: true
         },
-        playlist : {
+        playlist: {
             type: String,
-            required:true,
+            required: true,
         },
-        isPublished :{
+        isPublished: {
             type: Boolean,
-            default:true
-        }, 
-        owner : {
-            type: Schema.Types.ObjectId,
-            ref : 'User'
+            default: true
         },
-        likes : [
-            { 
-                type: Schema.Types.ObjectId, 
+        owner: {
+            type: Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        likes: [
+            {
+                type: Schema.Types.ObjectId,
                 ref: 'User'
             }
-        ]
-        ,  
-        dislikes : [
-            { 
-                type: Schema.Types.ObjectId, 
+        ],
+        dislikes: [
+            {
+                type: Schema.Types.ObjectId,
                 ref: 'User'
             }
         ]
     },
     {
-        timestamps:true
+        timestamps: true
     }
 )
 
-
-
-/*videoSchema.plugin(mongooseAggregatePaginate)*/
-
+videoSchema.plugin(mongooseAggregatePaginate);
 
 export const Video = mongoose.model("Video", videoSchema)
-
