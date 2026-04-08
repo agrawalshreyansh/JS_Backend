@@ -20,6 +20,11 @@ import express, { Application } from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import errorHandler from './middlewares/errors.middleware.js';
+import userRouter from './routes/user.routes.js';
+import videoRouter from './routes/video.routes.js';
+import subscriptionRouter from './routes/subscription.routes.js';
+import recommendationRouter from './routes/recommendations.routes.js';
+import healthRouter from './routes/health.routes.js';
 
 // Configuration interface — ISP: only contains what AppFactory needs
 interface AppConfig {
@@ -74,21 +79,6 @@ export class AppFactory {
   //       their files to TypeScript.
   // -------------------------------------------------------
   private setupRoutes(): void {
-    // Dynamic imports allow mixing JS + TS during migration.
-    // Route files will be converted to TypeScript by Persons 2–5.
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const userRouter = require('./routes/user.routes.js').default;
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const videoRouter = require('./routes/video.routes.js').default;
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const subscriptionRouter =
-      require('./routes/subscription.routes.js').default;
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const recommendationRouter =
-      require('./routes/recommendations.routes.js').default;
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const healthRouter = require('./routes/health.routes.js').default;
-
     this.app.use('/api/v1/users', userRouter);
     this.app.use('/api/v1/videos', videoRouter);
     this.app.use('/api/v1/subscriptions', subscriptionRouter);
