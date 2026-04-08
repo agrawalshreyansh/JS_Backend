@@ -1,7 +1,7 @@
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Video } from "../models/video.model.js";
-import { uploadOnCloud } from "../utils/cloudinary.js";
+import { cloudinaryService } from "../services/CloudinaryService.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { User } from "../models/user.model.js";
 import mongoose from "mongoose";
@@ -34,8 +34,8 @@ const uploadVideo = asyncHandler(async(req,res) => {
         throw new ApiError(401, "Thumbnail is required!")
     }
     
-    const thumbnail = await uploadOnCloud(thumbnailLocalPath)
-    const video = await uploadOnCloud(videoLocalPath)
+    const thumbnail = await cloudinaryService.uploadOnCloud(thumbnailLocalPath)
+    const video = await cloudinaryService.uploadOnCloud(videoLocalPath)
 
     if (!video) {
         throw new ApiError(401, "Video upload failed")
