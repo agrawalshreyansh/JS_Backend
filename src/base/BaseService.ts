@@ -9,25 +9,30 @@
 //     individual methods without rewriting CRUD boilerplate.
 //   - OCP (Open/Closed): Base stays closed for modification;
 //     subclasses extend it with new behaviour.
-//   - Generic / Composition over Inheritance: Uses TypeScript
-//     generics so one base class handles ANY Document type.
+//   - Composition Over Inheritance: Uses generics so one base
+//     class handles ANY Document type without re-implementing
+//     anything.
 // ============================================================
 
-import { Document, Model, FilterQuery, UpdateQuery } from 'mongoose';
+import { Document, Model } from 'mongoose';
+
+// A flexible filter/update shape that avoids Mongoose v8
+// strict overload issues while keeping meaningful typing.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyFilter = Record<string, any>;
 
 /**
  * BaseService<T> — Generic CRUD service base.
  *
- * DIP: The constructor accepts a `Model<T>` (abstraction),
+ * DIP: The constructor accepts a Model<T> (abstraction),
  * so concrete services inject their own model — we never
  * depend on a specific concrete class.
  *
- * T must extend Document so that Mongoose typing is preserved.
+ * T must extend Document so Mongoose typing is preserved.
  */
 export abstract class BaseService<T extends Document> {
   // ENCAPSULATION: model is private to this class hierarchy.
-  // Subclasses interact with it only through the public/
-  // protected methods defined here.
+  // Subclasses interact with it only via the methods below.
   constructor(protected readonly model: Model<T>) {}
 
   // -------------------------------------------------------
@@ -46,24 +51,28 @@ export abstract class BaseService<T extends Document> {
   }
 
   // -------------------------------------------------------
-  // Read — findOne with typed filter
+  // Read — findOne with flexible filter
+  // Abstraction: callers don't know how we query Mongoose
   // -------------------------------------------------------
-  async findOne(filter: FilterQuery<T>): Promise<T | null> {
-    return await this.model.findOne(filter);
+  async findOne(filter: AnyFilter): Promise<T | null> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return await this.model.findOne(filter as any);
   }
 
   // -------------------------------------------------------
-  // Read — find many with typed filter
+  // Read — find many with flexible filter
   // -------------------------------------------------------
-  async find(filter: FilterQuery<T> = {}): Promise<T[]> {
-    return await this.model.find(filter);
+  async find(filter: AnyFilter = {}): Promise<T[]> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return await this.model.find(filter as any);
   }
 
   // -------------------------------------------------------
   // Update — findByIdAndUpdate
   // -------------------------------------------------------
-  async updateById(id: string, data: UpdateQuery<T>): Promise<T | null> {
-    return await this.model.findByIdAndUpdate(id, data, { new: true });
+  async updateById(id: string, data: AnyFilter): Promise<T | null> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return await this.model.findByIdAndUpdate(id, data as any, { new: true });
   }
 
   // -------------------------------------------------------
@@ -74,12 +83,10 @@ export abstract class BaseService<T extends Document> {
   }
 
   // -------------------------------------------------------
-  // Update — findOneAndUpdate with typed filter and update
+  // Update — findOneAndUpdate with flexible filter + data
   // -------------------------------------------------------
-  async findAndUpdate(
-    filter: FilterQuery<T>,
-    data: UpdateQuery<T>
-  ): Promise<T | null> {
-    return await this.model.findOneAndUpdate(filter, data, { new: true });
+  async findAndUpdate(filter: AnyFilter, data: AnyFilter): Promise<T | null> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return await this.model.findOneAndUpdate(filter as any, data as any, { new: true });
   }
 }
