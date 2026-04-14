@@ -170,6 +170,5 @@ The server will run on `http://localhost:8000` and start a keep-alive cron job t
 3. Commit changes.
 4. Push and create a pull request.
 
-## License
 
-ISC
+
