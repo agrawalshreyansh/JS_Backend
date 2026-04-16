@@ -1,7 +1,8 @@
+import "./polyfill.js";
 import connectDB from "./db/index.js";
 import  dotenv from "dotenv";
 import {app} from './app.js'
-import { startKeepAliveJob } from "./utils/keepAlive.js";
+import { keepAliveService } from "./utils/KeepAliveService.js";
 
 dotenv.config({
     path: './.env'
@@ -15,7 +16,7 @@ connectDB()
         
         // Start the keep-alive cron job
         const serverUrl = process.env.SERVER_URL || `http://localhost:${process.env.PORT}`;
-        startKeepAliveJob(serverUrl);
+        keepAliveService.startKeepAliveJob(serverUrl);
       });
 })
 .catch((error) => {

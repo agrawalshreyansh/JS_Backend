@@ -1,7 +1,7 @@
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Video } from "../models/video.model.js";
-import { uploadOnCloud, deleteFromCloud } from "../utils/cloudinary.js";
+import { cloudinaryService } from "../services/CloudinaryService.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { User } from "../models/user.model.js";
 import mongoose from "mongoose";
@@ -10,7 +10,7 @@ import { ObjectId } from 'mongodb';
 
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
-    
+
     const pipeline = [];
 
     // Filter by query (title or description)
@@ -96,11 +96,8 @@ const createVideo = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Video and thumbnail files are required!");
     }
 
-    const videoLocalPath = req.files.videoFile[0].path;
-    const thumbnailLocalPath = req.files.thumbnailFile[0].path;
-
-    const videoFile = await uploadOnCloud(videoLocalPath);
-    const thumbnail = await uploadOnCloud(thumbnailLocalPath);
+    const thumbnail = await cloudinaryService.uploadOnCloud(thumbnailLocalPath)
+    const video = await cloudinaryService.uploadOnCloud(videoLocalPath)
 
     if (!videoFile) {
         throw new ApiError(400, "Video upload failed");

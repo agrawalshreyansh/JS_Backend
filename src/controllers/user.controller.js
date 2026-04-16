@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js"
 import { User } from "../models/user.model.js"
-import { uploadOnCloud } from "../utils/cloudinary.js"
+import { cloudinaryService } from "../services/CloudinaryService.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import jwt from "jsonwebtoken"
 import mongoose from "mongoose"
@@ -59,8 +59,8 @@ const registerUser = asyncHandler(async (req, res) => {
         coverImageLocalPath = req.files.coverImage[0].path
     }
 
-    const avatar = await uploadOnCloud(avatarLocalPath)
-    const coverImage = await uploadOnCloud(coverImageLocalPath);
+    const avatar = await cloudinaryService.uploadOnCloud(avatarLocalPath)
+    const coverImage = await cloudinaryService.uploadOnCloud(coverImageLocalPath);
 
     if (!avatar) {
         throw new ApiError(400, "Avatar file is required")
