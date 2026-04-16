@@ -4,7 +4,7 @@ import {app} from './app.js'
 import { startKeepAliveJob } from "./utils/keepAlive.js";
 
 dotenv.config({
-    path: './env'
+    path: './.env'
 })
 
 
